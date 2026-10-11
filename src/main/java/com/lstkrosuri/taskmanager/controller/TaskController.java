@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -68,5 +69,29 @@ public class TaskController {
 
         return newTask;
     }
+
+
+    @PutMapping("/api/tasks/{id}")
+    public Task updateTask(
+            @PathVariable Long id,
+            @RequestBody Task updatedTask) {
+
+        Task existingTask = tasks.stream()
+                .filter(task -> task.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Task not found with id: " + id
+                        )
+                );
+
+        existingTask.setTitle(updatedTask.getTitle());
+        existingTask.setDescription(updatedTask.getDescription());
+        existingTask.setCompleted(updatedTask.isCompleted());
+
+        return existingTask;
+    }
+
 
 }
