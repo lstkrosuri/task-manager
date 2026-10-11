@@ -8,38 +8,28 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.ArrayList;
 
 @RestController
 public class TaskController {
 
-    private final List<Task> tasks = List.of(
-            new Task(
-                    1L,
-                    "Learn Java",
-                    "Practice Java classes and objects",
-                    false
-            ),
-            new Task(
-                    2L,
-                    "Learn Spring Boot",
-                    "Build my first REST API",
-                    true
-            ),
-            new Task(
-                    3L,
-                    "Learn Angular",
-                    "Create the Task Manager frontend",
-                    false
-            ),
-            new Task(
-                    4L,
-                    "Learn Oracle SQL",
-                    "Practice SELECT, INSERT, UPDATE and DELETE",
-                    false
-            )
-    );
+    private final List<Task> tasks = new ArrayList<>(List.of(
+            new Task(1L, "Learn Java",
+                    "Practice Java classes and objects", false),
+
+            new Task(2L, "Learn Spring Boot",
+                    "Build my first REST API", true),
+
+            new Task(3L, "Learn Angular",
+                    "Create the Task Manager frontend", false),
+
+            new Task(4L, "Learn Oracle SQL",
+                    "Practice SELECT, INSERT, UPDATE and DELETE", false)
+    ));
 
     // GET all tasks
     @GetMapping("/api/tasks")
@@ -61,4 +51,22 @@ public class TaskController {
                         )
                 );
     }
+
+
+    @PostMapping("/api/tasks")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Task createTask(@RequestBody Task newTask) {
+
+        long nextId = tasks.stream()
+                .mapToLong(Task::getId)
+                .max()
+                .orElse(0L) + 1;
+
+        newTask.setId(nextId);
+
+        tasks.add(newTask);
+
+        return newTask;
+    }
+
 }
