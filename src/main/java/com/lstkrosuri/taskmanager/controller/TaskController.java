@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -92,6 +93,24 @@ public class TaskController {
 
         return existingTask;
     }
+
+
+    @DeleteMapping("/api/tasks/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTask(@PathVariable Long id) {
+
+        boolean removed = tasks.removeIf(
+                task -> task.getId().equals(id)
+        );
+
+        if (!removed) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Task not found with id: " + id
+            );
+        }
+    }
+
 
 
 }
