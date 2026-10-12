@@ -9,6 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.domain.Sort;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+
 import java.util.List;
 
 @Service
@@ -81,5 +85,36 @@ public class TaskService {
         }
 
         return Sort.by(Sort.Direction.ASC, sortBy);
+    }
+
+    public Page<Task> getTasksPaginated(
+            Boolean completed,
+            int page,
+            int size,
+            String sortBy) {
+
+        if (page < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Page number must be zero or greater"
+            );
+        }
+
+        if (size < 1 || size > 100) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Page size must be between 1 and 100"
+            );
+        }
+
+        Sort sort = createValidatedSort(sortBy);
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        if (completed != null) {
+            return taskRepository.findByCompleted(completed, pageable);
+        }
+
+        return taskRepository.findAll(pageable);
     }
 }

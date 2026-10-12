@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 
 @RestController
@@ -24,10 +26,27 @@ public class TaskController {
 
     // GET all tasks
     @GetMapping("/api/tasks")
-    public List<Task> getTasks(
+    public Object getTasks(
             @RequestParam(required = false) Boolean completed,
-            @RequestParam(defaultValue = "id") String sort) {
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
 
+        // If pagination is requested, return a Page<Task>
+        if (page != null || size != null) {
+
+            int pageNumber = (page != null) ? page : 0;
+            int pageSize = (size != null) ? size : 10;
+
+            return taskService.getTasksPaginated(
+                    completed,
+                    pageNumber,
+                    pageSize,
+                    sort
+            );
+        }
+
+        // Otherwise, preserve existing behavior
         if (completed != null) {
             return taskService.getTasksByCompleted(completed, sort);
         }
