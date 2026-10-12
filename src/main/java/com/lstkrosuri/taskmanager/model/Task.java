@@ -7,6 +7,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Column;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "TASKS")
@@ -24,9 +26,12 @@ public class Task {
     )
     private Long id;
 
+    @NotBlank(message = "Task title is required")
+    @Size(max = 200, message = "Task title cannot exceed 200 characters")
     @Column(name = "TITLE", nullable = false, length = 200)
     private String title;
 
+    @Size(max = 1000, message = "Task description cannot exceed 1000 characters")
     @Column(name = "DESCRIPTION", length = 1000)
     private String description;
 

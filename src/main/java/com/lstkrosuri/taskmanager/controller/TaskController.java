@@ -7,6 +7,8 @@ import com.lstkrosuri.taskmanager.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
 
 @RestController
@@ -34,7 +36,7 @@ public class TaskController {
     // POST create task
     @PostMapping("/api/tasks")
     @ResponseStatus(HttpStatus.CREATED)
-    public Task createTask(@RequestBody Task newTask) {
+    public Task createTask(@Valid @RequestBody Task newTask) {
         return taskService.createTask(newTask);
     }
 
@@ -42,7 +44,7 @@ public class TaskController {
     @PutMapping("/api/tasks/{id}")
     public Task updateTask(
             @PathVariable Long id,
-            @RequestBody Task updatedTask) {
+            @Valid @RequestBody Task updatedTask) {
 
         return taskService.updateTask(id, updatedTask);
     }
