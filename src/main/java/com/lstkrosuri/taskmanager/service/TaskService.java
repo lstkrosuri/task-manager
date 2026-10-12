@@ -2,63 +2,45 @@
 package com.lstkrosuri.taskmanager.service;
 
 import com.lstkrosuri.taskmanager.model.Task;
+import com.lstkrosuri.taskmanager.repository.TaskRepository;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class TaskService {
 
-    private final List<Task> tasks = new ArrayList<>(List.of(
-            new Task(1L, "Learn Java",
-                    "Practice Java classes and objects", false),
+    private final TaskRepository taskRepository;
 
-            new Task(2L, "Learn Spring Boot",
-                    "Build my first REST API", true),
+    // Constructor injection
+    public TaskService(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
+    }
 
-            new Task(3L, "Learn Angular",
-                    "Create the Task Manager frontend", false),
-
-            new Task(4L, "Learn Oracle SQL",
-                    "Practice SELECT, INSERT, UPDATE and DELETE", false)
-    ));
-
-    // READ all tasks
+    // GET /api/tasks
     public List<Task> getAllTasks() {
-        return tasks;
+        return taskRepository.findAll();
     }
 
-    // READ one task by ID
+    // GET /api/tasks/{id}
     public Task getTaskById(Long id) {
-        return tasks.stream()
-                .filter(task -> task.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Task not found with id: " + id
-                        )
-                );
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Task not found with ID: " + id
+                ));
     }
 
-    // CREATE a new task
+    // POST /api/tasks
     public Task createTask(Task newTask) {
-
-        long nextId = tasks.stream()
-                .mapToLong(Task::getId)
-                .max()
-                .orElse(0L) + 1;
-
-        newTask.setId(nextId);
-        tasks.add(newTask);
-
-        return newTask;
+        newTask.setId(null);
+        return taskRepository.save(newTask);
     }
 
-    // UPDATE an existing task
+    // PUT /api/tasks/{id}
     public Task updateTask(Long id, Task updatedTask) {
 
         Task existingTask = getTaskById(id);
@@ -67,21 +49,14 @@ public class TaskService {
         existingTask.setDescription(updatedTask.getDescription());
         existingTask.setCompleted(updatedTask.isCompleted());
 
-        return existingTask;
+        return taskRepository.save(existingTask);
     }
 
-    // DELETE a task
+    // DELETE /api/tasks/{id}
     public void deleteTask(Long id) {
 
-        boolean removed = tasks.removeIf(
-                task -> task.getId().equals(id)
-        );
+        Task existingTask = getTaskById(id);
 
-        if (!removed) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Task not found with id: " + id
-            );
-        }
+        taskRepository.delete(existingTask);
     }
 }
