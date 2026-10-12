@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -23,10 +24,16 @@ public class TaskController {
 
     // GET all tasks
     @GetMapping("/api/tasks")
-    public List<Task> getTasks() {
-        return taskService.getAllTasks();
-    }
+    public List<Task> getTasks(
+            @RequestParam(required = false) Boolean completed,
+            @RequestParam(defaultValue = "id") String sort) {
 
+        if (completed != null) {
+            return taskService.getTasksByCompleted(completed, sort);
+        }
+
+        return taskService.getAllTasks(sort);
+    }
     // GET task by ID
     @GetMapping("/api/tasks/{id}")
     public Task getTaskById(@PathVariable Long id) {

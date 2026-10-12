@@ -7,6 +7,7 @@ import com.lstkrosuri.taskmanager.repository.TaskRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -21,8 +22,18 @@ public class TaskService {
     }
 
     // GET /api/tasks
-    public List<Task> getAllTasks() {
-        return taskRepository.findAll();
+    public List<Task> getAllTasks(String sortBy) {
+
+        Sort sort = createValidatedSort(sortBy);
+
+        return taskRepository.findAll(sort);
+    }
+
+    public List<Task> getTasksByCompleted(boolean completed, String sortBy) {
+
+        Sort sort = createValidatedSort(sortBy);
+
+        return taskRepository.findByCompleted(completed, sort);
     }
 
     // GET /api/tasks/{id}
@@ -58,5 +69,17 @@ public class TaskService {
         Task existingTask = getTaskById(id);
 
         taskRepository.delete(existingTask);
+    }
+
+    private Sort createValidatedSort(String sortBy) {
+
+        if (!sortBy.equals("id") && !sortBy.equals("title")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid sort field. Allowed values: id, title"
+            );
+        }
+
+        return Sort.by(Sort.Direction.ASC, sortBy);
     }
 }
