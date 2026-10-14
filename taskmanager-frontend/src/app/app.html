@@ -1,0 +1,384 @@
+<div class="app-container">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div>
+      <h1>My Task Manager</h1>
+      <p>Angular + Spring Boot + Oracle Database</p>
+    </div>
+
+    <span class="header-label">Full Stack Project</span>
+  </header>
+
+
+  <!-- SUCCESS / ERROR MESSAGES -->
+  @if (successMessage) {
+    <div class="alert success-alert" role="status">
+      {{ successMessage }}
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="alert error-alert" role="alert">
+      {{ errorMessage }}
+    </div>
+  }
+
+
+  <!-- DASHBOARD STATISTICS -->
+  <section class="stats-grid">
+
+    <div class="stat-card">
+      <span class="stat-label">Total Tasks</span>
+      <strong class="stat-number">{{ totalTasks }}</strong>
+    </div>
+
+    <div class="stat-card completed-stat">
+      <span class="stat-label">Completed</span>
+      <strong class="stat-number">{{ completedTasks }}</strong>
+    </div>
+
+    <div class="stat-card pending-stat">
+      <span class="stat-label">Pending</span>
+      <strong class="stat-number">{{ pendingTasks }}</strong>
+    </div>
+
+  </section>
+
+
+  <!-- ADD NEW TASK -->
+  <section class="panel">
+
+    <h2>Add New Task</h2>
+
+    <form (ngSubmit)="addTask()" #addForm="ngForm">
+
+      <div class="form-group">
+        <label for="newTitle">Task Title *</label>
+
+        <input
+          id="newTitle"
+          type="text"
+          name="newTitle"
+          [(ngModel)]="newTaskTitle"
+          placeholder="What do you need to do?"
+          maxlength="200"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="newDescription">Description</label>
+
+        <textarea
+          id="newDescription"
+          name="newDescription"
+          [(ngModel)]="newTaskDescription"
+          placeholder="Add a description (optional)"
+          maxlength="1000"
+          rows="3"
+        ></textarea>
+      </div>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="saving || !newTaskTitle.trim()"
+      >
+        {{ saving ? 'Saving...' : '+ Add Task' }}
+      </button>
+
+    </form>
+
+  </section>
+
+
+  <!-- TASK LIST -->
+  <section class="panel">
+
+    <div class="section-heading">
+      <h2>My Tasks</h2>
+
+      <button
+        type="button"
+        class="btn btn-outline"
+        (click)="loadTasks()"
+        [disabled]="loading"
+      >
+        {{ loading ? 'Refreshing...' : 'Refresh Tasks' }}
+      </button>
+    </div>
+
+
+    <!-- SEARCH AND FILTER -->
+    <div class="toolbar">
+
+      <div class="search-field">
+        <label for="taskSearch">Search Tasks</label>
+
+        <input
+          id="taskSearch"
+          type="search"
+          name="taskSearch"
+          [(ngModel)]="searchText"
+          (ngModelChange)="resetPage()"
+          placeholder="Search title or description"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label for="statusFilter">Status</label>
+
+        <select
+          id="statusFilter"
+          name="statusFilter"
+          [(ngModel)]="selectedFilter"
+          (ngModelChange)="resetPage()"
+        >
+          <option value="all">All Tasks</option>
+          <option value="completed">Completed</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="sortBy">Sort By</label>
+
+        <select
+          id="sortBy"
+          name="sortBy"
+          [(ngModel)]="selectedSort"
+          (ngModelChange)="resetPage()"
+        >
+          <option value="id">Task ID</option>
+          <option value="title">Title (A-Z)</option>
+        </select>
+      </div>
+
+    </div>
+
+
+    <!-- LOADING -->
+    @if (loading) {
+      <p class="state-message">Loading tasks...</p>
+    }
+
+
+    <!-- TASK CARDS -->
+    @if (!loading) {
+
+      @if (filteredTasks.length === 0) {
+
+        <div class="empty-state">
+          <h3>No tasks found</h3>
+          <p>
+            Add a new task or change your search and filters.
+          </p>
+        </div>
+
+      } @else {
+
+        <div class="task-list">
+
+          @for (task of paginatedTasks; track task.id) {
+
+            <article class="task-card"
+                     [class.task-done]="task.completed">
+
+              @if (editingTaskId === task.id) {
+
+                <!-- EDIT MODE -->
+                <div class="edit-form">
+
+                  <h3>Edit Task #{{ task.id }}</h3>
+
+                  <div class="form-group">
+                    <label [for]="'editTitle-' + task.id">
+                      Task Title
+                    </label>
+
+                    <input
+                      [id]="'editTitle-' + task.id"
+                      type="text"
+                      name="editTitle"
+                      [(ngModel)]="editTaskTitle"
+                      maxlength="200"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label [for]="'editDescription-' + task.id">
+                      Description
+                    </label>
+
+                    <textarea
+                      [id]="'editDescription-' + task.id"
+                      name="editDescription"
+                      [(ngModel)]="editTaskDescription"
+                      maxlength="1000"
+                      rows="3"
+                    ></textarea>
+                  </div>
+
+                  <div class="task-actions">
+
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      (click)="saveEdit(task)"
+                      [disabled]="updatingTaskId !== null ||
+                                  !editTaskTitle.trim()"
+                    >
+                      {{
+                        updatingTaskId === task.id
+                          ? 'Saving...'
+                          : 'Save Changes'
+                      }}
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn btn-outline"
+                      (click)="cancelEdit()"
+                      [disabled]="updatingTaskId !== null"
+                    >
+                      Cancel
+                    </button>
+
+                  </div>
+
+                </div>
+
+              } @else {
+
+                <!-- DISPLAY MODE -->
+                <div class="task-top">
+
+                  <div>
+                    <span class="task-id">
+                      Task #{{ task.id }}
+                    </span>
+
+                    <h3>{{ task.title }}</h3>
+                  </div>
+
+                  @if (task.completed) {
+                    <span class="status-badge status-completed">
+                      Completed
+                    </span>
+                  } @else {
+                    <span class="status-badge status-pending">
+                      Pending
+                    </span>
+                  }
+
+                </div>
+
+                <p class="task-description">
+                  {{ task.description || 'No description provided.' }}
+                </p>
+
+                <div class="task-actions">
+
+                  <button
+                    type="button"
+                    class="btn btn-success"
+                    (click)="toggleTask(task)"
+                    [disabled]="updatingTaskId !== null ||
+                                deletingTaskId !== null"
+                  >
+                    @if (updatingTaskId === task.id) {
+                      Updating...
+                    } @else if (task.completed) {
+                      Mark Pending
+                    } @else {
+                      Mark Completed
+                    }
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn btn-outline"
+                    (click)="startEdit(task)"
+                    [disabled]="updatingTaskId !== null ||
+                                deletingTaskId !== null ||
+                                editingTaskId !== null"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    (click)="deleteTask(task)"
+                    [disabled]="deletingTaskId !== null ||
+                                updatingTaskId !== null ||
+                                editingTaskId !== null"
+                  >
+                    {{
+                      deletingTaskId === task.id
+                        ? 'Deleting...'
+                        : 'Delete'
+                    }}
+                  </button>
+
+                </div>
+
+              }
+
+            </article>
+
+          }
+
+        </div>
+
+
+        <!-- PAGINATION -->
+        <div class="pagination">
+
+          <span class="pagination-info">
+            Showing {{ paginatedTasks.length }}
+            of {{ filteredTasks.length }} matching tasks
+          </span>
+
+          <div class="pagination-controls">
+
+            <button
+              type="button"
+              class="btn btn-outline"
+              (click)="previousPage()"
+              [disabled]="currentPage <= 1"
+            >
+              Previous
+            </button>
+
+            <span>
+              Page {{ currentPage }} of {{ totalPages }}
+            </span>
+
+            <button
+              type="button"
+              class="btn btn-outline"
+              (click)="nextPage()"
+              [disabled]="currentPage >= totalPages"
+            >
+              Next
+            </button>
+
+          </div>
+
+        </div>
+
+      }
+
+    }
+
+  </section>
+
+
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    Task Manager | Angular + Spring Boot + Oracle
+  </footer>
+
+</div>
